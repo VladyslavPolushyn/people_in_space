@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Space</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <!-- e5d5ff23-f3d8-42a1-8e0b-9645d879ad90 -->
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=e5d5ff23-f3d8-42a1-8e0b-9645d879ad90&lang=ru_RU" type="text/javascript">
+    </script>
+    <style>
+        .bold-text {
+            font-weight: bold;
+        }
+        #iss_info {
+            width: 600px;
+            box-sizing: border-box;
+        }
+        #time_info, #people_info {
+            width: 150px;
+        }
+        #wrapper {
+            display: flex;
+        }
+        #right_block, #iss_info {
+            border: 1px solid black;
+        }
+        #time_info, #people_info {
+            padding: 10px;
+        }
+        #people_info {
+            /*height: 100%;*/
+        }
+        #people_list {
+            padding: 0;
+        }
+        #people_list li {
+            display: block;
+            padding: 5px;
+            border: 1px solid black;
+            border-radius: 3px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="left_block">
+            <div id="iss_info">
+                <p class="bold-text">ISS is now located at: latitude: <span id="latitude_span"></span>, longitude: <span id="longitude_span"></span></p>              
+            </div>
+            <div id="map" style="width: 600px; height: 400px"></div>
+        </div>
+        <div id="right_block">
+            <div id="time_info" class="border-gray"><p class="bold-text">Current UTC Time: </p><span id="time_span"></span></div>
+            <div id="people_info" class="border-gray">
+                <div class="total-amount"><p class="bold-text">Total amount: </p><span id="people_count_span"></span> people on ISS</div>
+                <div>
+                    <ul id="people_list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+        
+        let url_iss = "http://api.open-notify.org/iss-now.json";
+        let url_people = "http://api.open-notify.org/astros.json";
+        let latitude, longitude;
+        let myMap;
+        let myGeoObject;
+
+        function iss(){
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', url_iss);
+            xhr.onload = function () {
+                let result = xhr.responseText;
+                result = JSON.parse(result);
+                latitude = result.iss_position.latitude;
+                longitude = result.iss_position.longitude;
+                latitude_span.innerHTML = latitude;
+                longitude_span.innerHTML = longitude;
+
+                if(myMap){
+                    myGeoObject.geometry.setCoordinates([latitude, longitude]);
+                }
+            }
+            xhr.onerror = function () {
+                console.log("ERROR");
+            }
+            xhr.send();
+           
+        }
+
+        iss();
+
+        function people(){
+            let current_date = new Date();
+            time_span.innerHTML = current_date;
+
+            let xhr = new XMLHttpRequest();
+            let people_in_iss = [];
+            xhr.open('GET', url_people);
+            xhr.onload = function () {
+                let result = xhr.responseText;
+                result = JSON.parse(result);
+                result.people.forEach(function(elem){
+                    if(elem.craft == "ISS"){
+                        people_in_iss.push(elem.name);
+                    }
+                });
+                people_count_span.innerHTML = people_in_iss.length;
+                people_list.innerHTML= "";
+                for(let i = 0; i < people_in_iss.length; i++){
+                    let li = document.createElement('li');
+                    li.innerHTML = people_in_iss[i];
+                    people_list.append(li);
+                }
+            }
+            xhr.onerror = function () {
+                console.log("ERROR");
+            }
+
+            xhr.send();   
+        }
+
+        people();
+
+
+                    //create Ymap 
+            ymaps.ready(init);
+            function init(){
+                myMap = new ymaps.Map("map", {
+                    center: [latitude, longitude],
+                    zoom: 5
+                });
+                // Create Marker
+                myGeoObject = new ymaps.GeoObject({
+                    geometry: {
+                        type: "Point", // тип геометрии - точка
+                        coordinates: [latitude, longitude] // координаты точки
+                    }
+                });
+                myMap.geoObjects.add(myGeoObject);
+            }
+
+let issDisplay = setInterval(iss, 5000);
+let peopleDisplay = setInterval(people, 5000);
+
+
+    </script>
+</body>
+</html>
