@@ -1,2 +1,1 @@
-Использовал Yandex Maps API
-Для использования Google Maps API нужно привязать платежную карту. У меня сейчас ее нет)
+Yandex Maps API
